@@ -1,0 +1,227 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Práctica de guitarra</title>
+<style>
+:root{
+  --bg:#fff;
+  --sidebar:#fafafa;
+  --text:#161616;
+  --muted:#6f6f6f;
+  --line:#e9e9e9;
+  --active:#f0f0f0;
+  --note:#f7f9fc;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,ui-sans-serif,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+body{min-height:100vh}
+.app{display:grid;grid-template-columns:280px 1fr;min-height:100vh}
+.sidebar{
+  position:sticky;top:0;height:100vh;background:var(--sidebar);
+  border-right:1px solid var(--line);padding:42px 24px;
+}
+.brand{margin:0 0 28px 6px;display:flex;align-items:center}
+.brand img{display:block;width:118px;max-width:100%;height:auto}
+.lesson-list{display:flex;flex-direction:column;gap:8px}
+.lesson-btn{
+  border:0;background:transparent;text-align:left;width:100%;padding:14px;
+  border-radius:12px;cursor:pointer;display:grid;grid-template-columns:34px 1fr;
+  gap:12px;align-items:start;color:var(--text);transition:.15s ease;
+}
+.lesson-btn:hover{background:#f3f3f3}
+.lesson-btn.active{background:var(--active)}
+.num{
+  width:30px;height:30px;border-radius:50%;display:flex;align-items:center;
+  justify-content:center;background:#e7e7e7;color:#555;font-weight:700;font-size:13px
+}
+.lesson-btn.active .num{background:#1f1f1f;color:#fff}
+.lesson-title{font-size:16px;font-weight:700;line-height:1.3;margin-top:2px}
+.lesson-sub{font-size:13px;color:var(--muted);margin-top:4px;line-height:1.35}
+.content{padding:56px 64px 80px;max-width:1200px;width:100%;margin:0 auto}
+.eyebrow{
+  font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:#777;
+  font-weight:700;margin-bottom:8px;min-height:15px
+}
+h1{font-size:42px;line-height:1.1;margin:0 0 28px;letter-spacing:-.03em}
+.video-shell{
+  width:100%;aspect-ratio:16/9;border-radius:14px;overflow:hidden;
+  background:#111;border:1px solid #202020
+}
+.video-shell iframe{width:100%;height:100%;border:0;display:block}
+.info-section{margin-top:34px}
+.info-section h2{font-size:22px;margin:0 0 16px}
+.body-text{font-size:17px;line-height:1.72;color:#333}
+.body-text p{margin:0 0 16px}
+.body-text p:last-child{margin-bottom:0}
+.body-text strong{font-weight:700;color:#222}
+.note{
+  margin-top:18px;background:var(--note);border:1px solid #e8edf4;border-radius:12px;
+  padding:18px 20px;font-size:15px;line-height:1.6;color:#334
+}
+@media (max-width:820px){
+  .app{grid-template-columns:1fr}
+  .sidebar{position:relative;height:auto;border-right:0;border-bottom:1px solid var(--line);padding:24px 18px}
+  .brand{margin-left:0;margin-bottom:14px}
+  .brand img{width:105px}
+  .lesson-list{display:grid;grid-template-columns:1fr 1fr}
+  .content{padding:34px 22px 60px}
+  h1{font-size:34px}
+}
+@media (max-width:560px){
+  .lesson-list{grid-template-columns:1fr}
+  h1{font-size:30px}
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <div class="brand">
+      <img src="https://static.wixstatic.com/media/b4a607_b7a17bbf819d475ba599c96d2df31ea0~mv2.png" alt="Exequiel Bernard Music Lessons">
+    </div>
+    <div id="lessonList" class="lesson-list"></div>
+  </aside>
+
+  <main class="content">
+    <div id="eyebrow" class="eyebrow"></div>
+    <h1 id="title"></h1>
+
+    <div id="videoShell" class="video-shell"></div>
+
+    <section id="infoSection" class="info-section">
+      <h2 id="infoHeading"></h2>
+      <div id="description" class="body-text"></div>
+      <div id="note" class="note" style="display:none"></div>
+    </section>
+  </main>
+</div>
+
+<script>
+const JAM_DESCRIPTION = `
+  <p><strong>Hacé que el movimiento se vuelva cada vez más automático</strong></p>
+  <p>La clave no está en tocar rápido desde el principio, sino en <strong>repetir el movimiento de forma correcta y aumentar la velocidad de manera progresiva</strong>.</p>
+  <p>Practicá con la Jam Track en un tempo que puedas controlar. Cuando notes que el ejercicio empieza a salir de forma fluida y podés mantenerte junto con la pista la mayor parte del tiempo, probá pasar a una velocidad un poco más alta.</p>
+  <p>No hace falta que salga perfecto para avanzar. El objetivo es que puedas mantener el ritmo y realizar el movimiento con comodidad antes de aumentar la dificultad.</p>
+  <p><strong>Consejo para practicar</strong></p>
+  <p>Si una velocidad todavía te resulta difícil, bajá el tempo y trabajá ahí durante algunas repeticiones.</p>
+  <p>Cuando el movimiento empiece a sentirse más natural, volvé a subirlo de a poco.</p>
+  <p>Recordá: <strong>primero control, después velocidad.</strong></p>
+`;
+
+const lessons = [
+  {
+    menuTitle: "Te trabás al cambiar de acorde? Sumá esto en tu práctica",
+    menuSubtitle: "",
+    eyebrow: "",
+    pageTitle: "¿Te trabás al cambiar de acorde? Sumá esto en tu práctica",
+    video: "https://player.mediadelivery.net/embed/758198/a6f59d3d-fb07-4829-b5a9-94edfea9e161?autoplay=false&loop=false&muted=false&preload=true&responsive=true",
+    infoHeading: "Video explicación",
+    description: `
+      <p>Lo cubierto en esta lección:</p>
+      <p>- Explicaciones generales.</p>
+      <p>- Cómo tocar los acordes Sol mayor (G) y Re mayor (D).</p>
+      <p>- Posicionamiento y colocación correcta de los dedos, y cómo hacer la transición correctamente.</p>
+    `,
+    note: "Continua tu entrenamiento con: JAM TRACK 60 BPM"
+  },
+  {
+    menuTitle: "JAM TRACK 60 BPM",
+    menuSubtitle: "Transición de G a D",
+    eyebrow: "",
+    pageTitle: "JAM TRACK 60 BPM",
+    video: "https://player.mediadelivery.net/embed/758198/91c1ae1d-c60c-4316-8262-e06fca4c03a7?autoplay=false&loop=false&muted=false&preload=true&responsive=true",
+    infoHeading: "Transición de G a D",
+    description: JAM_DESCRIPTION,
+    note: ""
+  },
+  {
+    menuTitle: "JAM TRACK 75 BPM",
+    menuSubtitle: "Transición de G a D",
+    eyebrow: "",
+    pageTitle: "JAM TRACK 75 BPM",
+    video: "https://player.mediadelivery.net/embed/758198/8b022fd0-a65d-4d87-869f-8b43af9f5255?autoplay=false&loop=false&muted=false&preload=true&responsive=true",
+    infoHeading: "Transición de G a D",
+    description: JAM_DESCRIPTION,
+    note: ""
+  },
+  {
+    menuTitle: "JAM TRACK 90 BPM",
+    menuSubtitle: "Transición de G a D",
+    eyebrow: "",
+    pageTitle: "JAM TRACK 90 BPM",
+    video: "https://player.mediadelivery.net/embed/758198/a8d31a4f-741c-4a26-8308-5b64356d0a0a?autoplay=false&loop=false&muted=false&preload=true&responsive=true",
+    infoHeading: "Transición de G a D",
+    description: JAM_DESCRIPTION,
+    note: ""
+  },
+  {
+    menuTitle: "JAM TRACK 60 A 90 BPM",
+    menuSubtitle: "Transición de G a D",
+    eyebrow: "",
+    pageTitle: "JAM TRACK 60 A 90 BPM",
+    video: "https://player.mediadelivery.net/embed/758198/00ee6805-3b86-4c81-a596-0dd4759f788e?autoplay=false&loop=false&muted=false&preload=true&responsive=true",
+    infoHeading: "Transición de G a D",
+    description: JAM_DESCRIPTION,
+    note: ""
+  }
+];
+
+const list = document.getElementById("lessonList");
+const eyebrow = document.getElementById("eyebrow");
+const title = document.getElementById("title");
+const videoShell = document.getElementById("videoShell");
+const infoSection = document.getElementById("infoSection");
+const infoHeading = document.getElementById("infoHeading");
+const description = document.getElementById("description");
+const note = document.getElementById("note");
+
+function renderLesson(index){
+  const lesson = lessons[index];
+
+  document.querySelectorAll(".lesson-btn").forEach((button,i)=>{
+    button.classList.toggle("active", i === index);
+  });
+
+  eyebrow.textContent = lesson.eyebrow || "";
+  title.textContent = lesson.pageTitle;
+  videoShell.innerHTML = `<iframe
+    src="${lesson.video}"
+    title="${lesson.menuTitle}"
+    loading="lazy"
+    allow="accelerometer;gyroscope;autoplay;encrypted-media;picture-in-picture;fullscreen"
+    allowfullscreen></iframe>`;
+
+  infoHeading.textContent = lesson.infoHeading || "";
+  description.innerHTML = lesson.description || "";
+
+  if(lesson.note){
+    note.style.display = "block";
+    note.textContent = lesson.note;
+  }else{
+    note.style.display = "none";
+    note.textContent = "";
+  }
+
+  infoSection.style.display = (lesson.infoHeading || lesson.description || lesson.note) ? "block" : "none";
+}
+
+lessons.forEach((lesson,index)=>{
+  const button = document.createElement("button");
+  button.className = "lesson-btn";
+  button.innerHTML = `
+    <div class="num">${index + 1}</div>
+    <div>
+      <div class="lesson-title">${lesson.menuTitle}</div>
+      <div class="lesson-sub">${lesson.menuSubtitle}</div>
+    </div>
+  `;
+  button.addEventListener("click", ()=>renderLesson(index));
+  list.appendChild(button);
+});
+
+renderLesson(0);
+</script>
+</body>
+</html>
